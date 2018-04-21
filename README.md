@@ -25,7 +25,7 @@ Or for IPv6:
      $ php dnstls.php sucuri.net quad9 AAAA
      sucuri.net has IPv6 address 2a02:fe80:1010::16
 
-If you are using CleanBrowsing, it will block (return not found) for adult sites):
+If you are using CleanBrowsing, it will block (return not found) for adult sites:
 
      $ php dnstls.php pornhub.com cleanbrowsing 
      Host pornhub.com not found: 3(NXDOMAIN)
