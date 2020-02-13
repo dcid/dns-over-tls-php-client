@@ -114,7 +114,7 @@ function debug_print_r($raw)
 /* Parses DNS raw answers. */
 function dnslib_read_dnsanswer($raw, $requesttype)
 {
-    debug_print_r($raw);
+//     debug_print_r($raw);
     $results = array();
     $raw_counter = 0;
 
