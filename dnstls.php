@@ -38,6 +38,11 @@ function dnslib_raw2domain($qname)
     $i = 1;
     while(1)
     {
+        if($mylenght == 192)
+        {
+            /* cname pointing to itself */
+            break;
+        }
         while($mylenght)
         {
             $domainname = $domainname.$qname[$i++];
@@ -48,11 +53,6 @@ function dnslib_raw2domain($qname)
 
         if($mylenght == 0)
         {
-            break;
-        }
-        else if($mylenght == 192)
-        {
-            /* cname pointing to itself */
             break;
         }
         $domainname = $domainname.".";
@@ -100,10 +100,21 @@ function dnslib_generate_dnsquery($domainname, $requesttype="A")
     return($dns_query);
 }
 
+function debug_print_r($raw)
+{
+    $hex = bin2hex($raw);
+    $fancyHex = array();
+    $len = strlen($hex);
+    for($i = 0; $i*4 < $len; $i++) {
+      $fancyHex[$i] = substr($hex, $i*4, 4);
+    }
+    print_r($fancyHex);
+}
 
 /* Parses DNS raw answers. */
 function dnslib_read_dnsanswer($raw, $requesttype)
 {
+    debug_print_r($raw);
     $results = array();
     $raw_counter = 0;
 
@@ -122,20 +133,19 @@ function dnslib_read_dnsanswer($raw, $requesttype)
 
 
     $raw_counter += strlen($domainresp) + 2;
-    $rawtype = ord($raw[$raw_counter + 7]);
+
+    $raw_counter+=4;
+    // read the name again to determine if it is a pointer or a name
+    $nextName= dnslib_raw2domain(substr($raw, $raw_counter));
+    // increase the position by the size of the name
+    $raw_counter+= strlen($nextName) + 2;
 
 
     $ans_header = unpack("ntype/nclass/Nttl/nlength", substr( $raw, $raw_counter, 10 ) );
-    $raw_counter += 13;
+    $raw_counter += 10;
 
-    /* Jumping to the IP address */
-    $raw_counter += 3;
-
-    $iplength = 4;
-    if($rawtype === 28)
-    {
-        $iplength = 16;
-    }
+    $rawtype = $ans_header["type"];
+    $iplength = $ans_header["length"];
 
     if($rawtype == 1 || $rawtype == 28)
     {
@@ -214,10 +224,19 @@ else if($argv[2] == "cleanbrowsing")
     $dnsserver = "185.228.168.168";
     $peer_name = "cleanbrowsing.org";
 }
+else if($argv[2] == "google")
+{
+    $dnsserver = "8.8.8.8";
+    $peer_name = "dns.google";
+}
+else if($argv[2] == "adclear")
+{
+    $dnsserver = "35.223.113.18";
+    $peer_name = "dns.adclear.com";
+}
 else
 {
     $peer_name = $dnsserver = $argv[2];
-    	 
 }
 
 $dnsquery = dnslib_generate_dnsquery($domainname, $requesttype);
